@@ -37,13 +37,13 @@ void usr1_handler (int sigNumber){
 
         srand(time(NULL));
 
-        comandoParaExecutar = rand() % 100 +1;
+        int random = rand() % 100 +1;
 
-        printf("\nNumero sorteado: %d\n",comandoParaExecutar);
+        printf("\nNumero sorteado: %d\n",random);
 
         printf("\nEnviando numero sorteado para o pai...\n");
 
-        write(descritoresPipe[1], &comandoParaExecutar, sizeof(int));
+        write(descritoresPipe[1], &random, sizeof(int));
 
         printf("\nEnviado!\n");
 
@@ -97,12 +97,10 @@ void usr2_handler (int sigNumber){
             printf("\nNao ha comando para executar");
 
         if(comandoParaExecutar != 0 && comandoParaExecutar % 2 == 0) {
-            printf("\nIrei pingar 8.8.8.8");
             execl ( "/bin/ping", "ping", "-c 5", "8.8.8.8",NULL);
         }
 
         if(comandoParaExecutar != 0 && comandoParaExecutar % 2 != 0) {
-            printf("\nIrei pingar paris.testdebit.info");
             execl ( "/bin/ping", "ping", "-c 5", "-i 2", "paris.testdebit.info",NULL);
         }
 
@@ -117,7 +115,7 @@ void usr2_handler (int sigNumber){
 
 void esperandoPorSinal (){
     printf("\nEsperando por sinal...\n");
-    sleep(10);
+    pause();
 }
 
 int main(void) {
