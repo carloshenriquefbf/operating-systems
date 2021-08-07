@@ -20,7 +20,8 @@ void usr1_handler (int sigNumber){
 
     printf("\nProcesso pai (pid: %d) criando o pipe...\n", getpid());
 
-    pipe(descritoresPipe);
+    if(pipe(descritoresPipe) < 0)
+        exit(1);
 
     printf("\nPipe criado!\n");
 
@@ -29,11 +30,18 @@ void usr1_handler (int sigNumber){
 
     printf("\nExecutando fork do pai (pid: %d) \n", getpid());
 
-    int pidFilho = fork();
+    pid_t pidFilho = fork();
 
-    if (pidFilho == 0) {
+    if (pidFilho < 0)
+        exit(1);
+
+    else if (pidFilho == 0) {
         printf("\n---------FILHO-----------\n");
         printf("\nSou o filho, pid: %d\n", getpid());
+
+        printf("\nPorta de leitura fechada!\n");
+
+        close(descritoresPipe[0]);
 
         srand(time(NULL));
 
@@ -52,16 +60,16 @@ void usr1_handler (int sigNumber){
         close(descritoresPipe[1]);
 
         printf("\nPorta de escrita fechada!\n");
-
-        close(descritoresPipe[0]);
-
-        printf("\nPorta de leitura fechada!\n");
         exit(0);
 
     } else {
         waitpid(pidFilho,NULL,0);
         printf("\n-----------PAI-----------\n");
         printf("\nSou o pai, pid: %d\n", getpid());
+
+        close(descritoresPipe[1]);
+
+        printf("\nPorta de escrita fechada!\n");
 
         printf("\nLendo o numero sorteado enviado via pipe pelo filho...\n");
 
@@ -73,10 +81,6 @@ void usr1_handler (int sigNumber){
 
         printf("\nFechando as portas do pipe abertas...\n");
 
-        close(descritoresPipe[1]);
-
-        printf("\nPorta de escrita fechada!\n");
-
         close(descritoresPipe[0]);
 
         printf("\nPorta de leitura fechada!\n");
@@ -87,9 +91,12 @@ void usr1_handler (int sigNumber){
 void usr2_handler (int sigNumber){
     printf("\n--------TAREFA 2---------\n");
 
-    int pidFilho = fork();
+    pid_t pidFilho = fork();
 
-    if (pidFilho == 0) {
+    if(pidFilho < 0)
+        exit(1);
+
+    else if (pidFilho == 0) {
         printf("\n---------FILHO-----------\n");
         printf("\nSou o filho, pid: %d\n", getpid());
 
@@ -103,7 +110,6 @@ void usr2_handler (int sigNumber){
         if(comandoParaExecutar != 0 && comandoParaExecutar % 2 != 0) {
             execl ( "/bin/ping", "ping", "-c 5", "-i 2", "paris.testdebit.info",NULL);
         }
-
         exit(0);
     } else {
         waitpid(pidFilho,NULL,0);
@@ -119,9 +125,12 @@ void esperandoPorSinal (){
 }
 
 int main(void) {
-    signal(SIGTERM, term_handler);
-    signal(SIGUSR1, usr1_handler);
-    signal(SIGUSR2, usr2_handler);
+    if(signal(SIGTERM, term_handler) == SIG_ERR)
+        printf("Nao consegui tratar SIGTERM");
+    if(signal(SIGUSR1, usr1_handler) == SIG_ERR)
+        printf("Nao consegui tratar SIGUSR1");
+    if(signal(SIGUSR2, usr2_handler) == SIG_ERR)
+        printf("Nao consegui tratar SIGUSR2");
 
     pid_t pid = getpid();
     printf ("\nPid do processo: %d\n", pid);
